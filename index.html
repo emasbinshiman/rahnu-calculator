@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emas Binshiman Rahnu Calculator</title>
+    <!-- Load Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Using the Inter font family */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Lighter background gray */
+        }
+        /* Custom CSS for the glowing price update animation */
+        .price-highlight {
+            transition: background-color 0.5s ease-out, box-shadow 0.5s ease-out;
+        }
+        .price-highlight.glowing {
+            background-color: #fcd34d !important; /* Yellow-300 */
+            box-shadow: 0 0 15px rgba(252, 211, 77, 0.9);
+        }
+        .price-highlight:not(.glowing) {
+             background-color: transparent; 
+        }
+        /* Style for the fixed WhatsApp button (CTA Type 2) */
+        .whatsapp-fixed-cta {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 50; /* Ensure it stays on top */
+            background-color: #25D366; /* WhatsApp Green */
+            box-shadow: 0px 4px 12px rgba(0,0,0,0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .whatsapp-fixed-cta:hover {
+            transform: scale(1.05);
+            box-shadow: 0px 6px 15px rgba(0,0,0,0.5);
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8 min-h-screen flex items-start justify-center">
+
+    <div class="w-full max-w-6xl bg-white shadow-2xl rounded-xl overflow-hidden">
+        
+        <!-- Header -->
+        <header class="bg-amber-600 p-6 text-white text-center rounded-t-xl">
+            <!-- Emas Binshiman Logo Inserted Here -->
+            <!-- CRITICAL: Replace the 'src' below with the PUBLIC URL of your logo after hosting it on a service like Imgur, Google Photos, or a CDN. The current URL is a placeholder. -->
+            <img src="https://i.imgur.com/O5Rkg9L.png" 
+                 alt="Emas Binshiman Logo" 
+                 class="mx-auto h-16 mb-2"
+                 style="width: 3cm; height: 3cm; object-fit: contain;"
+                 loading="lazy" 
+                 onerror="this.onerror=null; this.src='https://placehold.co/150x64/D97706/FFFFFF?text=EMAS BINSHIMAN'; this.style.borderRadius='4px'; this.classList.remove('h-16'); this.classList.add('p-2');">
+            <h1 class="text-3xl font-extrabold md:text-4xl">Emas Binshiman Rahnu Calculator</h1>
+            <p class="text-amber-100 mt-1 text-lg">(Live Price per Gram in MYR)</p>
+            
+            <!-- 1. Hero Section CTA -->
+            <div class="mt-6 flex flex-col items-center">
+                  <a href="https://wa.me/60166648004?text=Hi%20Emas%20Binshiman!%20I'm%20interested%20to%20know%20today's%20gold%20price%20and%20available%20offers." 
+                   class="inline-block bg-white text-amber-800 font-extrabold py-4 px-8 rounded-xl text-xl shadow-lg hover:bg-amber-100 transition duration-300 transform hover:scale-[1.03]"
+                   target="_blank">
+                    💬 WhatsApp Us Now
+                </a>
+                <p class="mt-3 text-amber-100 text-sm italic">Instant 24/7 response on WhatsApp • Shariah-Compliant • Certified 916 & 999 Gold • Rahnu-Friendly</p>
+            </div>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="p-6 md:p-10 grid grid-cols-1 lg:grid-cols-3 gap-8 md:gap-12">
+
+            <!-- 1. Live Price Table (Column 1 & 2 on Desktop) -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end border-b pb-3 border-gray-200">
+                    <h2 class="text-2xl font-bold text-gray-800">
+                        Live Gold Price List
+                    </h2>
+                    <div id="basePrice999" class="text-base font-extrabold text-amber-800 bg-amber-200 p-2 px-4 rounded-full mt-2 sm:mt-0 shadow-md">
+                        999 Base: RM 0.00
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto rounded-xl shadow-lg border border-gray-100">
+                    <table class="min-w-full divide-y divide-amber-200">
+                        <thead class="bg-amber-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-amber-700 uppercase tracking-wider">Purity (Fineness)</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-amber-700 uppercase tracking-wider">Karat</th>
+                                <th class="px-6 py-3 text-right text-sm font-semibold text-amber-700 uppercase tracking-wider">Price (RM/g)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="priceTableBody" class="bg-white divide-y divide-gray-100">
+                            <!-- Table rows will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <p id="lastUpdated" class="text-sm text-gray-500 pt-2 text-right italic"></p>
+                <div id="loadingIndicator" class="text-center py-4 hidden">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-4 border-amber-600 inline-block"></div>
+                    <p class="text-amber-700 mt-2 font-medium">Updating prices from live feed...</p>
+                </div>
+            </div>
+
+            <!-- 2. Calculator Inputs & Outputs (Column 3 on Desktop) -->
+            <div class="lg:col-span-1 space-y-6 bg-amber-50 p-6 rounded-xl shadow-xl border border-amber-100 h-fit sticky top-4">
+                <h2 class="text-2xl font-bold text-amber-800 border-b-2 border-amber-200 pb-2">Rahnu Calculation</h2>
+
+                <!-- Gold Fineness Dropdown -->
+                <div>
+                    <label for="fineness" class="block text-sm font-semibold text-gray-700 mb-2">1. Select Gold Purity</label>
+                    <select id="fineness" class="w-full p-3 border-2 border-amber-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 transition duration-200 ease-in-out bg-white text-gray-900 shadow-sm" onchange="calculateRahnuValue()">
+                        <option value="999">999 (24K)</option>
+                        <option value="950">950 (23K)</option>
+                        <option value="916" selected>916 (22K)</option>
+                        <option value="875">875 (21K)</option>
+                        <option value="835">835 (20K)</option>
+                        <option value="750">750 (18K)</option>
+                        <option value="585">585 (14K)</option>
+                    </select>
+                </div>
+
+                <!-- Gold Weight Input -->
+                <div>
+                    <label for="weight" class="block text-sm font-semibold text-gray-700 mb-2">2. Gold Weight (Grams)</label>
+                    <input type="number" id="weight" value="10.0" step="0.1" min="0.1" class="w-full p-3 border-2 border-amber-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 transition duration-200 ease-in-out text-gray-900 shadow-sm" oninput="calculateRahnuValue()">
+                </div>
+                
+                <!-- Custom Rahnu Margin Input -->
+                <div>
+                    <label for="margin" class="block text-sm font-semibold text-gray-700 mb-2">3. Rahnu Margin (%)</label>
+                    <input type="number" id="margin" value="70" step="1" min="50" max="95" class="w-full p-3 border-2 border-amber-300 rounded-lg focus:ring-amber-500 focus:border-amber-500 transition duration-200 ease-in-out text-gray-900 shadow-sm" oninput="calculateRahnuValue()">
+                    <p class="text-xs text-gray-500 mt-1">Typical margins range from 65% to 80%.</p>
+                </div>
+
+                <!-- Outputs -->
+                <div class="mt-8 space-y-4">
+                    <!-- Marhun Value -->
+                    <div class="p-4 bg-amber-200 rounded-xl shadow-md">
+                        <p class="text-sm font-medium text-amber-800">Total Gold Valuation (Marhun Value)</p>
+                        <p id="marhunValue" class="text-3xl font-extrabold text-amber-900 mt-1">RM 0.00</p>
+                    </div>
+
+                     <!-- Loan Value (Most Prominent) -->
+                    <div class="p-4 bg-amber-600 rounded-xl shadow-xl transform hover:scale-[1.01] transition duration-200 ease-in-out">
+                        <p class="text-lg font-bold text-white">Estimated Loan/Financing Value</p>
+                        <p id="loanValue" class="text-4xl font-extrabold text-white mt-1">RM 0.00</p>
+                    </div>
+                </div>
+                
+                <!-- 3. Mid-Page Conversion Triggers -->
+                <div class="mt-8 pt-6 border-t border-amber-300 text-center">
+                    <p class="text-md font-semibold text-amber-800 mb-3">
+                        Ready to sell, trade, or rahnu your gold?
+                    </p>
+                    <p class="text-sm text-gray-700 mb-4">
+                        Message Emas Binshiman directly for real-time valuation and advice.
+                    </p>
+                    <a href="https://wa.me/60166648004?text=Hi%20Emas%20Binshiman!%20I%20need%20a%20real-time%20valuation%20for%20my%20gold." 
+                       class="inline-block bg-amber-800 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-md hover:bg-amber-900 transition duration-200"
+                       target="_blank">
+                        Get My Valuation on WhatsApp
+                    </a>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Disclaimer -->
+        <footer class="p-6 md:p-10 pt-0 text-center border-t border-gray-100">
+            <!-- 4. Final Section CTA (Urgency) -->
+            <div class="mb-6 p-4 bg-gray-100 rounded-lg shadow-inner">
+                <p class="text-lg font-bold text-gray-700 mb-3">
+                    Don’t miss today’s rate — gold prices change every hour.
+                </p>
+                <a href="https://wa.me/60166648004?text=Hi%20Emas%20Binshiman!%20I%20want%20to%20lock%20today's%20rate%20for%20my%20gold%20transaction." 
+                   class="inline-block bg-red-600 text-white font-bold py-3 px-8 rounded-full text-xl shadow-xl hover:bg-red-700 transition duration-200"
+                   target="_blank">
+                    Lock Today’s Rate Now 🔒
+                </a>
+            </div>
+            
+            <p class="text-xs text-gray-500">
+                Disclaimer: Prices are derived from a third-party gold API and are for estimation only. Actual transaction prices and margins may vary by institution.
+            </p>
+        </footer>
+    </div>
+    
+    <!-- 2. Sticky Floating Button (Visible on All Pages) -->
+    <a href="https://wa.me/60166648004?text=Hi%20Emas%20Binshiman!%20I%20want%20to%20ask%20about%20your%20gold%20products." 
+       class="whatsapp-fixed-cta text-white font-bold py-3 px-5 rounded-full text-lg flex items-center space-x-2"
+       target="_blank">
+        <!-- Phone Call Icon (SVG from Lucide) -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-phone-call h-6 w-6">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-3.52-3.52A19.79 19.79 0 0 1 2 4.18 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            <path d="M14.05 2a.9.9 0 0 1 .1 1.63 8 8 0 0 0 4.22 4.22.9.9 0 0 1 1.63.1"/>
+            <path d="M14.47 5.56a.9.9 0 0 1 .09 1.63 4 4 0 0 0 2.13 2.13.9.9 0 0 1 1.63.09"/>
+        </svg>
+        <span class="sm:hidden">Chat</span> <!-- Mobile text -->
+        <span class="hidden sm:inline">Chat with Emas Binshiman</span> <!-- Desktop/Tablet text -->
+    </a>
+    
+    <script>
+        // --- CONSTANTS ---
+        const GOLD_API_URL = "https://data-asg.goldprice.org/dbXRates/MYR";
+        // One troy ounce is 31.1035 grams
+        const GRAMS_PER_TROY_OUNCE = 31.1035; 
+        const FALLBACK_PRICE_999 = 280.00; // Fallback 999/24K price in RM/g
+        const REFRESH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+        // Purity mapping: Fineness to Karat
+        const PURITIES = [
+            { fineness: 999, karat: '24K', id: 'price999' },
+            { fineness: 950, karat: '23K', id: 'price950' },
+            { fineness: 916, karat: '22K', id: 'price916' },
+            { fineness: 875, karat: '21K', id: 'price875' },
+            { fineness: 835, karat: '20K', id: 'price835' },
+            { fineness: 750, karat: '18K', id: 'price750' },
+            { fineness: 585, karat: '14K', id: 'price585' }
+        ];
+
+        let basePrice999 = FALLBACK_PRICE_999;
+        
+        // --- UTILITY FUNCTIONS ---
+
+        /**
+         * Formats a number to RM currency with 2 decimal places and comma separator.
+         * @param {number} num The number to format.
+         * @returns {string} Formatted string.
+         */
+        function formatRM(num) {
+            // Check for valid number
+            if (typeof num !== 'number' || isNaN(num)) {
+                return 'RM 0.00';
+            }
+            // Use toLocaleString for reliable currency formatting
+            return new Intl.NumberFormat('en-MY', {
+                style: 'currency',
+                currency: 'MYR',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            }).format(num).replace('MYR', 'RM'); // Ensure RM prefix
+        }
+
+        /**
+         * Gets the current time in GMT+8 (Asia/Kuala_Lumpur) format.
+         * @returns {string} Formatted time string.
+         */
+        function getGMT8Time() {
+            const options = {
+                year: 'numeric', month: 'short', day: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit',
+                hour12: true,
+                timeZone: 'Asia/Kuala_Lumpur'
+            };
+            const now = new Date();
+            return now.toLocaleString('en-MY', options) + ' (GMT+8)';
+        }
+        
+        /**
+         * Applies a glow animation to an element briefly.
+         * @param {string} elementId The ID of the element to highlight.
+         */
+        function highlightUpdate(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.classList.add('glowing');
+                setTimeout(() => {
+                    element.classList.remove('glowing');
+                }, 1200); // 1.2 seconds for visibility 
+            }
+        }
+
+        // --- CORE LOGIC ---
+
+        /**
+         * Calculates the derived price for a specific purity based on the 999 base price.
+         * @param {number} fineness The gold fineness (e.g., 916).
+         * @returns {number} The calculated price per gram.
+         */
+        function calculatePurityPrice(fineness) {
+            return basePrice999 * (fineness / 999.0);
+        }
+
+        /**
+         * Populates the price table with calculated prices for all purities.
+         */
+        function updatePricesTable() {
+            const tableBody = document.getElementById('priceTableBody');
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            PURITIES.forEach(purity => {
+                const price = calculatePurityPrice(purity.fineness);
+                const newRow = tableBody.insertRow();
+                newRow.className = 'hover:bg-amber-50 transition-colors duration-150';
+
+                // Purity Cell - left aligned, regular weight
+                const purityCell = newRow.insertCell();
+                purityCell.className = 'px-6 py-3 whitespace-nowrap text-sm text-gray-700';
+                purityCell.textContent = `${purity.fineness}`;
+
+                // Karat Cell - left aligned, regular weight
+                const karatCell = newRow.insertCell();
+                karatCell.className = 'px-6 py-3 whitespace-nowrap text-sm text-gray-700';
+                karatCell.textContent = purity.karat;
+                
+                // Price Cell (with ID for highlighting) - right aligned, bold
+                const priceCell = newRow.insertCell();
+                priceCell.id = purity.id;
+                priceCell.className = 'px-6 py-3 whitespace-nowrap text-right font-bold text-gray-900 price-highlight';
+                priceCell.textContent = formatRM(price);
+            });
+            
+            // Re-calculate the rahnu values every time the prices update
+            calculateRahnuValue();
+        }
+
+        /**
+         * Calculates the Marhun and Loan Values based on user inputs and selected purity.
+         */
+        function calculateRahnuValue() {
+            const fineness = parseFloat(document.getElementById('fineness').value);
+            const weight = parseFloat(document.getElementById('weight').value);
+            const margin = parseFloat(document.getElementById('margin').value);
+            
+            const marhunEl = document.getElementById('marhunValue');
+            const loanEl = document.getElementById('loanValue');
+
+            if (isNaN(fineness) || isNaN(weight) || isNaN(margin) || weight <= 0 || margin < 50 || margin > 95 || basePrice999 <= 0) {
+                marhunEl.textContent = 'RM 0.00';
+                loanEl.textContent = 'RM 0.00';
+                return;
+            }
+
+            // 1. Get the purity-adjusted price
+            const purityPrice = calculatePurityPrice(fineness);
+
+            // 2. Calculate Marhun Value (Total Gold Valuation)
+            const marhunValue = weight * purityPrice;
+
+            // 3. Calculate Loan Value (Marhun Value * Margin %)
+            const loanValue = marhunValue * (margin / 100);
+
+            // Update output fields
+            marhunEl.textContent = formatRM(marhunValue);
+            loanEl.textContent = formatRM(loanValue);
+        }
+
+
+        /**
+         * Fetches real-time gold price, converts it, updates displays, and recalculates.
+         */
+        async function fetchGoldPrice() {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            loadingIndicator.classList.remove('hidden');
+
+            try {
+                // Fetch the data
+                const response = await fetch(GOLD_API_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                
+                // Extract price per troy ounce (xauPrice) in MYR
+                // data.items[0].xauPrice is the price of Gold per troy ounce in MYR
+                const xauPrice = data.items[0].xauPrice;
+
+                // Conversion: Price_per_Gram_999 = xauPrice / Grams_per_Troy_Ounce
+                const newPricePerGram = xauPrice / GRAMS_PER_TROY_OUNCE;
+
+                // Check if price changed significantly to trigger animation
+                const isPriceChange = Math.abs(newPricePerGram - basePrice999) > 0.01;
+                basePrice999 = newPricePerGram;
+
+                // Update base price display
+                const basePriceEl = document.getElementById('basePrice999');
+                basePriceEl.textContent = `999 Base: ${formatRM(basePrice999)}`;
+                
+                // Update the table with all derived prices
+                updatePricesTable();
+                
+                // If price changed, highlight all price cells
+                if (isPriceChange) {
+                    PURITIES.forEach(purity => {
+                        highlightUpdate(purity.id);
+                    });
+                    highlightUpdate('basePrice999');
+                }
+
+                // Update timestamp
+                document.getElementById('lastUpdated').textContent = `Updated: ${getGMT8Time()}`;
+
+            } catch (error) {
+                console.error("Error fetching gold price. Using fallback.", error);
+                
+                // Fallback implementation on error
+                basePrice999 = FALLBACK_PRICE_999;
+                document.getElementById('basePrice999').textContent = `999 Base: ${formatRM(basePrice999)} (FALLBACK)`;
+                document.getElementById('lastUpdated').textContent = `Update FAILED at ${getGMT8Time()}. Using fallback price.`;
+                updatePricesTable(); // Recalculate with fallback price
+
+            } finally {
+                loadingIndicator.classList.add('hidden');
+                // Set the next refresh timer with exponential backoff logic (simplified retry for this context)
+                setTimeout(fetchGoldPrice, REFRESH_INTERVAL_MS);
+            }
+        }
+
+        // --- INITIALIZATION ---
+
+        window.onload = function() {
+            // Initial calculation and price fetch
+            fetchGoldPrice();
+        };
+    </script>
+
+</body>
+</html>
